@@ -2,9 +2,8 @@
 
 ### Tema 0
 
-- [ ] nume proiect (îl puteți schimba ulterior)
-- [ ] Scurtă descriere a temei alese, ce v-ați propus să implementați
-- [ ] actualizat `.gitignore` dacă nu sunt ignorate fișierele (binare) generate de editor/IDE; puteți folosi https://gitignore.io
+- [ ] Snake++
+- [ ] Mi-am propus să implementez jocul Snake cu câteva îmbunătățiri aduse, provocându-i astfel jucătorului atenția și agilitatea.
 
 ## Tema 1
 
