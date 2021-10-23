@@ -1,8 +1,5 @@
-# OOP Template
+# SNAKE++
 
-### Tema 0
-
-- [ ] Snake++
 - [ ] Mi-am propus să implementez jocul Snake cu câteva îmbunătățiri aduse, provocându-i astfel jucătorului atenția și agilitatea.
 
 ## Tema 1
