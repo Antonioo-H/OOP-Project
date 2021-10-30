@@ -1,26 +1,31 @@
 #include <iostream>
 #include <ctime>
-#include <windows.h>
 #include <rlutil.h>
+#include <chrono>
+#include <thread>
+#include <vector>
+#include <array>
+
 using namespace std;
 
-class Snake
+class Cell
 {
     int x;
     int y;
 public:
-    Snake(int a = 5, int b = 5){x = a; y = b;} /// snake position by default
-    ~Snake()= default;
-    void set_snakeX(int a) {x = a;}
-    void set_snakeY(int b) {y = b;}
-    int get_snakeX() const {return x;}
-    int get_snakeY() const {return y;}
-    Snake(const Snake& snake)
+    Cell(){};
+    Cell(int x, int y) : x(x), y(y) {}
+    ~Cell() = default;
+    void set_cellX(int a) {x = a;}
+    void set_cellY(int b) {y = b;}
+    int get_cellX() const {return x;}
+    int get_cellY() const {return y;}
+    Cell(const Cell& cell)
     {
-        this->x = snake.x;
-        this->y = snake.y;
+        this->x = cell.x;
+        this->y = cell.y;
     }
-    Snake& operator= (const Snake& a)
+    Cell& operator= (const Cell& a)
     {
         if(this != &a)
         {
@@ -29,20 +34,43 @@ public:
         }
         return *this;
     }
+    friend ostream& operator<< (ostream& out, const Cell& ob);
 };
 
-class Tail
+ostream& operator<< (ostream& out, const Cell& ob)
 {
-    Snake v[200];   /// TODO: vector<Snake> v
+    out << ob.x << '\n';
+    out << ob.y << '\n';
+    return out;
+}
+
+class Snake
+{
+    vector<Cell> v;
     int ntail = 0;
 public:
-    Tail() = default;
-    ~Tail()= default;
-    void add(int i, const Snake& snake) {v[i] = snake;}
+    Snake() {v.emplace_back(5,5);} /// snake position by default
+    ~Snake()= default;
+    void assign(int i, const Cell& snake) {v.at(i) = snake;}
+    void resize(const Cell& ob) {v.resize(ntail+1,ob);}  // aloc memorie pentru inca un element ce va fi pus in container
     void set_ntail(int a = 1) {ntail += a;}
     int get_ntail() const {return ntail;}
-    Snake get_element(int i) {return v[i];}
+    Cell get_head() const {return v.front();}
+    Cell get_lastElement() const {return v.back();}
+    Cell get_element(int i) const {return v.at(i);}
+    // desi, get_head() si get_lastElement() fac acelasi lucru ca get_element, le-am implementat pentru usurinta apelarii cand am nevoie de
+    // coordonatele acestor 2 elemente particulare
+    friend ostream& operator<< (ostream& out, const Snake& ob);
 };
+
+ostream& operator<< (ostream& out, const Snake& ob)
+{
+    int i, n = ob.get_ntail();
+    for(i = 0; i <= n; i++)
+        out << "Coordonate element " << i << ':' << '(' << ob.get_element(i).get_cellX() << ", " << ob.get_element(i).get_cellY() << ')' << '\n';
+
+    return out;
+}
 
 class Food
 {
@@ -55,74 +83,138 @@ public:
     void set_FoodY(int b) {y = b;}
     int get_FoodX() const {return x;}
     int get_FoodY() const {return y;}
+    friend ostream& operator<< (ostream& out, const Food& ob);
 };
 
-class Game
+ostream& operator<< (ostream& out, const Food& ob)
+{
+    out << ob.get_FoodX() << '\n';
+    out << ob.get_FoodY() << '\n';
+    return out;
+}
+
+class Board
 {
     const int height = 15;
     const int width = 20;
+    array<array<char, 20>, 15>board; // tabla care retine viitoarele obstacole (cred Tema 2)
 public:
-    enum Directions {Stop, Left, Right, Up, Down};
-    int score = 0;
-    bool GameOver;
-    Directions dir = Stop;
-
-    void Setup(Food&);
-    void Draw(Snake&, Food&, Tail&);
-    void Input();
-    void Logic(Snake&, Food&, Tail&);
+    Board()
+    {
+        for(int i = 0; i < height; i++)
+            board[i].fill(' ');
+    }
+    int get_height() const {return height;}
+    int get_width()  const {return width;}
+    void set_point(int x, int y, char val) {board[x][y] = val;}
+    char get_point(int x, int y) const {return board[x][y];}
+    friend ostream& operator<< (ostream&, const Board&);
 };
 
-void Game::Setup(Food& apple)
+ostream& operator<< (ostream& out, const Board& ob)
 {
-    GameOver = false;
-    srand(time(nullptr));
-    apple.set_FoodX(rand() % (width - 2));
-    apple.set_FoodY(rand() % (height - 2));
+    int i, j;
+    for(i = 0; i < ob.height; i++)
+    {
+        for(j = 0; j < ob.width; j++)
+            out << ob.get_point(i,j) << ' ';
+        cout << '\n';
+    }
+    return out;
 }
 
-void Game::Draw(Snake& snake, Food& apple, Tail& tail)
+class Game
 {
-    system("cls");
-    int i,j,k,n;
+    Board board;
+    Food apple;
+    Snake snake;
+    int score;
+    bool GameOver;
+    enum Directions {Stop, Left, Right, Up, Down};
+    Directions dir;
+
+    void Setup()
+    {
+        GameOver = false;
+        score = 0;
+        dir = Stop;
+        srand(time(nullptr));
+        apple.set_FoodX(rand() % (board.get_width() - 2));
+        apple.set_FoodY(rand() % (board.get_height() - 2));
+    }
+
+public:
+    Game() {Setup();} // Setup-ul jocului se face implicit la instantierea unui obiect
+    void Input();
+    void gotFood(const Cell&);
+    void Move();
+    void Collision();
+    void Logic();
+    void Draw();
+    void Play();
+    bool isOver() const {return GameOver;}
+};
+
+void Game::Draw()
+{
+    rlutil::cls();
+    int i,j,k;
     bool ok;
+    //initializez variabilele width si height pt a nu apela de multe ori getterii
+    int width = board.get_width();
+    int height = board.get_height();
+    int n = snake.get_ntail();
+
     for(i = -1; i <= width-2; i++)
         cout << '#';
     cout << '\n';
 
-    for(j = 0; j <= height-1; j++)
+    for(j = 0; j <= height-3; j++)
     {
         for(i = -1; i <= width-2; i++)
             if(i == -1 || i == width-2)
                 cout << '#';
             else
-            if(i == snake.get_snakeX() && j == snake.get_snakeY())
-                cout << "O";
-            else
-            if(i == apple.get_FoodX() && j == apple.get_FoodY())
-                cout << "*";
-            else
-            {
-                ok = false;
-                n = tail.get_ntail();
-                for(k = 1; k <= n; k++)
-                    if((tail.get_element(k)).get_snakeX() == i && (tail.get_element(k)).get_snakeY() == j)
-                    {
-                        ok = true;
-                        break;
-                    }
-                if(!ok)
-                    cout << ' ';
-                else
-                    cout << 'o';
+                if(i == snake.get_head().get_cellX() && j == snake.get_head().get_cellY())
+                {
+                    rlutil::setColor(4);
+                    cout << "O";
+                    rlutil::setColor(1);
+                }
 
-            }
+                else
+                    if(i == apple.get_FoodX() && j == apple.get_FoodY())
+                    {
+                        rlutil::setColor(6);
+                        cout << "*";
+                        rlutil::setColor(1);
+                    }
+                    else
+                    {
+                        ok = false;
+                        for(k = 1; k <= n; k++)
+                            if((snake.get_element(k)).get_cellX() == i && (snake.get_element(k)).get_cellY() == j)
+                            {
+                                ok = true;
+                                break;
+                            }
+                        if(!ok)
+                            cout << ' ';
+                        else
+                        {
+                            rlutil::setColor(2);
+                            cout << 'o';
+                            rlutil::setColor(1);
+                        }
+                    }
         cout << '\n';
     }
 
     for(i = -1; i <= width-2; i++)
         cout << '#';
+    rlutil::setColor(6);
     cout << "\nScor: " << score;
+    rlutil::setColor(1);
 }
 
 void Game::Input()
@@ -150,80 +242,114 @@ void Game::Input()
     }
 }
 
-void Game::Logic(Snake& snake, Food& apple, Tail& tail)
+void Game::gotFood(const Cell& tail)
 {
-    Snake prev1(snake);
+    if(snake.get_head().get_cellX() == apple.get_FoodX() && snake.get_head().get_cellY() == apple.get_FoodY())
+    {
+        score++;
+        snake.set_ntail();
+        snake.resize(tail); // aloc spatiu pentru noul element si il initializez
+        int x = rand() % (board.get_width() - 2);
+        int y = rand() % (board.get_height() - 2);
+        int n = snake.get_ntail(), ok = 1, i;
+        while(ok == 1) // ma asigur ca marul nu va fi generat pe o pozitie ocupata de sarpe
+        {
+            ok = 0;
+            for(i = 0; i <= n; i++)
+                if(x == snake.get_element(i).get_cellX() && y == snake.get_element(i).get_cellY())
+                {
+                    ok = 1;
+                    break;
+                }
+            if(ok == 1)
+            {
+                x = rand() % (board.get_width() - 2);
+                y = rand() % (board.get_height() - 2);
+            }
+        }
+        apple.set_FoodX(x);
+        apple.set_FoodY(y);
+    }
+}
 
-    switch (dir)
+void Game::Move()
+{
+    Cell head = snake.get_head();
+    Cell tail;
+    tail = snake.get_lastElement();
+
+    int i, n = snake.get_ntail();
+    for(i = n; i >= 1; i--) snake.assign(i,snake.get_element(i-1)); // fac mutari in vector
+
+    switch (dir) // setez noile coordonate pt elementul principal (capul)
     {
         case Left:
-            snake.set_snakeX(snake.get_snakeX()-1);
+            head.set_cellX(head.get_cellX()-1);
+            snake.assign(0,head);
             break;
 
         case Right:
-            snake.set_snakeX(snake.get_snakeX()+1);
+            head.set_cellX(head.get_cellX()+1);
+            snake.assign(0,head);
             break;
 
         case Up:
-            snake.set_snakeY(snake.get_snakeY()-1);
+            head.set_cellY(head.get_cellY()-1);
+            snake.assign(0,head);
             break;
 
         case Down:
-            snake.set_snakeY(snake.get_snakeY()+1);
+            head.set_cellY(head.get_cellY()+1);
+            snake.assign(0,head);
             break;
 
         default:
             break;
     }
+    gotFood(tail);
+}
 
-    int i,n = tail.get_ntail();
-    Snake prev2;
+void Game::Collision()
+{
+    int x = snake.get_head().get_cellX();
+    int y = snake.get_head().get_cellY();
 
+    // coliziune cu peretii
+    if(x == -1 || x == board.get_width()-2)   GameOver = true;
+    if(y == -1 || y == board.get_height()-2)  GameOver = true;
+
+    // coliziune cu corpul
+    int n = snake.get_ntail(), i;
     for(i = 1; i <= n; i++)
-    {
-        prev2 = tail.get_element(i);
-        tail.add(i,prev1);
-        prev1 = prev2;
-    }
-
-    if(snake.get_snakeX() == apple.get_FoodX() && snake.get_snakeY() == apple.get_FoodY())
-    {
-        score++;
-        tail.set_ntail();
-        apple.set_FoodX(rand() % (width - 2));
-        apple.set_FoodY(rand() % (height - 2));
-    }
-
-    if(snake.get_snakeX() == -1)        GameOver = true;
-    if(snake.get_snakeX() == width-2)   GameOver = true;
-    if(snake.get_snakeY() == -1)        GameOver = true;
-    if(snake.get_snakeY() == height-2)  GameOver = true;
-
-    n = tail.get_ntail();
-    for(i = 1; i <= n; i++)
-        if(snake.get_snakeX() == (tail.get_element(i)).get_snakeX() && snake.get_snakeY() == (tail.get_element(i)).get_snakeY())
+        if(x == snake.get_element(i).get_cellX() && y == snake.get_element(i).get_cellY())
         {
             GameOver = true;
             break;
-        } /// bug pentru pozitia marului in originea sistemului de coordonate carteziene!
+        }
+}
+
+void Game::Logic()
+{
+    Move();
+    Collision();
+}
+
+void Game::Play()
+{
+    Input();
+    Logic();
+    if(!isOver()) Draw(); // conditie pentru a nu imi desena sarpele (ce se suprapune cu zidul/capul cu corpul) dupa ce s-a lovit
 }
 
 int main()
 {
     rlutil::setColor(1);
-
-    Snake snake;
-    Tail tail;
-    Food apple;
     Game game;
 
-    game.Setup(apple);
-    while(!game.GameOver)
+    while(!game.isOver())
     {
-        game.Input();
-        game.Logic(snake,apple,tail);
-        game.Draw(snake,apple,tail);
-        Sleep(50);
+        game.Play();
+        this_thread::sleep_for(chrono::milliseconds(120));
     }
 
     return 0;
