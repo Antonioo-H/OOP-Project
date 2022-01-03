@@ -1,5 +1,15 @@
 #include "../headers/Cell.h"
 
+Cell::Cell(int x, int y) : x(x), y(y) {}
+
+void Cell::set_cellX(int a) {x = a;}
+
+void Cell::set_cellY(int b) {y = b;}
+
+int Cell::get_cellX() const {return x;}
+
+int Cell::get_cellY() const {return y;}
+
 Cell::Cell(const Cell& cell)
 {
     this->x = cell.x;

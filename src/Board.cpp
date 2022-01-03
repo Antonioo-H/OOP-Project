@@ -1,4 +1,4 @@
-#include <rlutil.h>
+#include "../libraries/rlutil.h"
 #include "../headers/Board.h"
 
 int Board::height = 15;
@@ -14,33 +14,40 @@ Board::Board()
     }
 }
 
+int Board::get_height() {return height;}
+
+int Board::get_width() {return width;}
+
+void Board::set_height(int x) {height = x;}
+
+void Board::set_width(int y) {width = y;}
+
 void Board::set_point(int x, int y, char val) {board[x][y] = val;}
 
 char Board::get_point(int x, int y) const {return board[x][y];}
 
 ostream& operator<< (ostream& out, const Board& ob)
 {
-    int i, j;
-    for(i = 0; i < Board::height; i++)
+    for(int i = 0; i < Board::height; i++)
     {
-        for(j = 0; j < Board::width; j++)
+        for(int j = 0; j < Board::width; j++)
             if(ob.get_point(i,j) == 'O')
             {
-                rlutil::setColor(4);
+                rlutil::setColor(4); // RED
                 out << ob.get_point(i,j) << ' ';
-                rlutil::setColor(1);
+                rlutil::setColor(1); // BLUE
             }
             else
                 if(ob.get_point(i,j) == 'o')
                 {
-                    rlutil::setColor(2);
+                    rlutil::setColor(2); // GREEN
                     out << ob.get_point(i,j) << ' ';
                     rlutil::setColor(1);
                 }
                 else
                     if(ob.get_point(i,j) == '*')
                     {
-                        rlutil::setColor(6);
+                        rlutil::setColor(6); // YELLOW
                         out << ob.get_point(i,j) << ' ';
                         rlutil::setColor(1);
                     }
@@ -49,4 +56,11 @@ ostream& operator<< (ostream& out, const Board& ob)
         cout << '\n';
     }
     return out;
+}
+
+void Board::clear_board()
+{
+    for(int i = 0; i < Board::height; i++)
+        for(int j = 0; j < Board::width; j++)
+            this->set_point(i, j, ' ');
 }

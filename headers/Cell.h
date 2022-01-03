@@ -8,13 +8,13 @@ class Cell
     int x;
     int y;
 public:
-    Cell(){};
-    Cell(int x, int y) : x(x), y(y) {}
+    Cell() = default;
+    Cell(int x, int y);
     ~Cell() = default;
-    void set_cellX(int a) {x = a;}
-    void set_cellY(int b) {y = b;}
-    int get_cellX() const {return x;}
-    int get_cellY() const {return y;}
+    void set_cellX(int a);
+    void set_cellY(int b);
+    int get_cellX() const;
+    int get_cellY() const;
     Cell(const Cell&);
     Cell& operator= (const Cell&);
     friend ostream& operator<< (ostream&, const Cell&);

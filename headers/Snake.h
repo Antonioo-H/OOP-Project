@@ -7,10 +7,10 @@ class Snake
 {
 protected:
     vector<Cell> v;
-    int ntail = 0;
+    int ntail{};
 public:
     Snake(); /// snake position by default
-    ~Snake()= default;
+    ~Snake() = default;
     void assign(int, const Cell&);
     void resize(const Cell&);  // aloc memorie pentru inca un element ce va fi pus in container
     void set_ntail(int a = 1);

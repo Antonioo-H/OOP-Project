@@ -18,8 +18,8 @@ Cell Snake::get_element(int i) const {return v.at(i);}
 
 ostream& operator<< (ostream& out, const Snake& ob)
 {
-    int i, n = ob.get_ntail();
-    for(i = 0; i <= n; i++)
+    int n = ob.get_ntail();
+    for(int i = 0; i <= n; i++)
         out << "Coordonate element " << i << ':' << '(' << ob.get_element(i).get_cellX() << ", " << ob.get_element(i).get_cellY() << ')' << '\n';
 
     return out;
