@@ -1,9 +1,6 @@
 #include "../libraries/rlutil.h"
 #include "../headers/Board.h"
 
-int Board::height = 15;
-int Board::width = 20;
-
 Board::Board()
 {
     board.reserve(height);
@@ -14,9 +11,9 @@ Board::Board()
     }
 }
 
-int Board::get_height() {return height;}
+int Board::get_height() const {return height;}
 
-int Board::get_width() {return width;}
+int Board::get_width() const {return width;}
 
 void Board::set_height(int x) {height = x;}
 
@@ -28,9 +25,9 @@ char Board::get_point(int x, int y) const {return board[x][y];}
 
 ostream& operator<< (ostream& out, const Board& ob)
 {
-    for(int i = 0; i < Board::height; i++)
+    for(int i = 0; i < ob.height; i++)
     {
-        for(int j = 0; j < Board::width; j++)
+        for(int j = 0; j < ob.width; j++)
             if(ob.get_point(i,j) == 'O')
             {
                 rlutil::setColor(4); // RED
@@ -60,7 +57,7 @@ ostream& operator<< (ostream& out, const Board& ob)
 
 void Board::clear_board()
 {
-    for(int i = 0; i < Board::height; i++)
-        for(int j = 0; j < Board::width; j++)
+    for(int i = 0; i < height; i++)
+        for(int j = 0; j < width; j++)
             this->set_point(i, j, ' ');
 }

@@ -6,16 +6,16 @@ using namespace std;
 
 class Board
 {
-    static int height;
-    static int width;
+    int height = 15;
+    int width = 20;
     vector<vector<char>> board;
 public:
     Board();
     ~Board() = default;
-    static int get_height();
-    static int get_width();
-    static void set_height(int x);
-    static void set_width(int y);
+    int get_height() const;
+    int get_width() const;
+    void set_height(int x);
+    void set_width(int y);
     void set_point(int x, int y, char val);
     char get_point(int x, int y) const;
     friend ostream& operator<< (ostream&, const Board&);

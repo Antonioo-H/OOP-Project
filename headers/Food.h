@@ -22,7 +22,7 @@ public:
     void set_FoodY(int);
     int get_FoodX() const;
     int get_FoodY() const;
-    void new_position(Board &board, Snake &snake, int &a, int &b, int tip_mar);
+    virtual void new_position(Board &board, Snake &snake, int &a, int &b) = 0;
     virtual bool effect(Game &game, Cell &tail, Board &board, Snake &snake) = 0;
 };
 

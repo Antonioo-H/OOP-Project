@@ -1,11 +1,20 @@
 #include "../headers/Game.h"
 
-Game::Game() {Setup();} // Setup-ul jocului se face implicit la instantierea unui obiect
+Game* Game::instance = nullptr;
+
+Game *Game::get_instance() {
+    if(instance == nullptr)
+    {
+        instance = new Game();
+    }
+    return instance;
+}
 
 Game::~Game()
 {
     for(auto& it : food)
         delete it;
+    food.clear();
 }
 
 void Game::Setup()
@@ -15,15 +24,16 @@ void Game::Setup()
     dir = Stop;
     food.push_back(new Apple());
     food.push_back(new Poisoned_Apple());
-    current = food.data();
+    current = &food[0];
     int x, y;
     do {
-        x = rand() % (Board::get_height() - 1);
+        x = rand() % (board.get_height() - 1);
     } while(x == 0);
 
     do {
-        y = rand() % (Board::get_width() - 1);
+        y = rand() % (board.get_width() - 1);
     } while(y == 0);
+
     (*current)->set_FoodX(x);
     (*current)->set_FoodY(y);
 }
@@ -33,8 +43,8 @@ void Game::Draw()
     rlutil::cls();
     board.clear_board();
     //initializez variabilele width si height pt a nu apela de multe ori getterii
-    int width = Board::get_width();
-    int height = Board::get_height();
+    int width = board.get_width();
+    int height = board.get_height();
     int n = snake.get_ntail();
 
     // limite tabla
@@ -93,21 +103,20 @@ void Game::Input()
 void Game::gotFood(Cell& tail)
 {
     // momentul cand pozitia marului este aceeasi cu cea a capului sarpelui
-    if((*current)->effect(*this, tail, board, snake) == 1)
+    if((*current)->effect(*this, tail, board, snake))
     {
-        int minim = min(Board::get_height(), Board::get_width());
-        current = food.data();
-        // cat timp sarpele are o anumita lungime, pot genera si mere otravite (tip_mar = 2)
+        int minim = min(board.get_height(), board.get_width());
+        int p = 0;
+        // cat timp sarpele are o anumita lungime, pot genera si mere otravite
         if(snake.get_ntail() <= ceil(minim/2)-3)
         {
             int j = rand() % 2;
             for(int i = 1; i <= j; i++)
-                current++;
+                p++;
         }
-        int a = 0, b = 0, type;
-        if(typeid(**current) == typeid(Apple)) type = 1;
-        else type = 2;
-        (*current)->new_position(board, snake, a, b, type);
+        current = &food[p];
+        int a = 0, b = 0;
+        (*current)->new_position(board, snake, a, b);
         (*current)->set_FoodX(a);
         (*current)->set_FoodY(b);
     }
@@ -152,8 +161,16 @@ void Game::Collision()
     int y = snake.get_head().get_cellY();
 
     // cap coliziune cu tabla
-    if(x == 0 || x == Board::get_height()-1)  GameOver = true;
-    if(y == 0 || y == Board::get_width()-1)   GameOver = true;
+    if(x == 0 || x == board.get_height()-1)
+    {
+        GameOver = true;
+        throw eroare_coliziune();
+    }
+    if(y == 0 || y == board.get_width()-1)
+    {
+        GameOver = true;
+        throw eroare_coliziune();
+    }
 
     // cap coliziune cu corpul
     int n = snake.get_ntail();
@@ -161,7 +178,7 @@ void Game::Collision()
         if(x == snake.get_element(i).get_cellX() && y == snake.get_element(i).get_cellY())
         {
             GameOver = true;
-            break;
+            throw eroare_coliziune();
         }
 }
 
@@ -173,7 +190,10 @@ void Game::Logic()
 
 void Game::Play()
 {
-    Input();
-    Logic();
-    if(!isOver()) Draw(); // conditie pentru a nu imi desena sarpele (ce se suprapune cu zidul/capul cu corpul) dupa ce s-a lovit
+    try{
+        Input();
+        Logic();
+        Draw();
+    }
+    catch(exception &err) {cout << err.what() << '\n';}
 }

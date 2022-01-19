@@ -9,6 +9,7 @@ public:
     ~Poisoned_Apple() override = default;
     bool effect(Game&, Cell&, Board&, Snake&) override;
     friend ostream& operator<< (ostream& out, const Poisoned_Apple& ob);
+    void new_position(Board &board, Snake &snake, int &a, int &b) override;
 };
 
 #endif

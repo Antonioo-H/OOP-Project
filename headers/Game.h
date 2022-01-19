@@ -2,9 +2,9 @@
 #define OOP_PROJECT_GAME_H
 #include <ctime>
 #include "../libraries/rlutil.h"
-#include <typeinfo>
 #include "Apple.h"
 #include "Poisoned_Apple.h"
+#include "Eroare.h"
 
 class Game
 {
@@ -17,7 +17,10 @@ class Game
     enum Directions {Stop, Left, Right, Up, Down};
     Directions dir;
 
+
+    static Game* instance;
     void Setup();
+    Game() {Setup();}
     void Input();
     void gotFood(Cell&);
     void Move();
@@ -25,12 +28,13 @@ class Game
     void Logic();
     void Draw();
 public:
-    Game();
+
     ~Game();
     void set_score(int x) {score = x;}
     int get_score() const {return score;}
     void Play();
     bool isOver() const {return GameOver;}
+    static Game* get_instance();
 };
 
 #endif
