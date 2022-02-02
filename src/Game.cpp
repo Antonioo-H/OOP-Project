@@ -1,5 +1,7 @@
 #include "../headers/Game.h"
 
+Game::Game(){Setup();}
+
 Game* Game::instance = nullptr;
 
 Game *Game::get_instance() {
@@ -15,6 +17,7 @@ Game::~Game()
     for(auto& it : food)
         delete it;
     food.clear();
+    observerList.clear();
 }
 
 void Game::Setup()
@@ -72,7 +75,6 @@ void Game::Draw()
     board.set_point((*current)->get_FoodX(), (*current)->get_FoodY(), '*');
 
     cout << board;
-    cout << "\nScor: " << score << '\n';
 }
 
 void Game::Input()
@@ -196,4 +198,19 @@ void Game::Play()
         Draw();
     }
     catch(exception &err) {cout << err.what() << '\n';}
+}
+
+void Game::add(Observer *o)
+{
+    observerList.push_back(o);
+}
+
+void Game::remove(Observer *o)
+{
+    observerList.remove(o);
+}
+
+void Game::notify()
+{
+    (*(observerList.begin()))->update(score);
 }
